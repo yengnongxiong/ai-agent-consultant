@@ -60,9 +60,10 @@ def test_triage_ranks_by_risk_and_discards_untraceable_findings():
 
 
 def test_render_escapes_model_text_so_it_cannot_inject_links_or_html():
-    a = assumption("add 20 sales reps", claim="[click](https://example.com) <img> a|b")
+    a = assumption("add 20 sales reps", claim="[click](https://example.com) <img> a|b, or visit www.example.com")
     md = sc.render(sc.Analysis(thesis="t", assumptions=[a], conflicts=[]), [a], [], [], "test-model")
     assert r"\[click\]" in md and r"\<img\>" in md and r"a\|b" in md
+    assert r"https\://example.com" in md and r"www\.example.com" in md  # GitHub won't autolink these
     assert "0 of 1 load-bearing assumptions are high-risk" in md  # risk 9 is below the bar
 
 
@@ -160,3 +161,16 @@ def test_html_brief_is_self_contained_escaped_and_plots_every_assumption():
     assert "default-src 'none'" in page  # the browser itself refuses scripts and remote files
     assert page.count('class="dot"') == 2 and 'href="#a1"' in page and 'id="a2"' in page
     assert "1 of 2 load-bearing assumptions are high-risk" in page and "$" not in page.split("<main>")[1]
+
+
+def test_cli_writes_markdown_or_html_from_one_run(tmp_path, monkeypatch, capsys):
+    draft = tmp_path / "growth.md"
+    draft.write_text(DRAFTS["growth.md"])
+    analysis = sc.Analysis(thesis="t", assumptions=[assumption("add 20 sales reps", claim="reps")], conflicts=[])
+    monkeypatch.setattr(sc, "run", lambda provider, drafts: analysis)
+
+    sc.main([str(draft)])
+    assert "| 1 | **9** | reps | viability |" in capsys.readouterr().out
+    sc.main([str(draft), "--html", "--provider", "gemini"])
+    page = capsys.readouterr().out
+    assert page.startswith("<!doctype html>") and "gemini-3.8-flash" in page

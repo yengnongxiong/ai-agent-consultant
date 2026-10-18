@@ -202,7 +202,7 @@ def risk(a: Assumption) -> int:
 
 
 def triage(analysis: Analysis, drafts: dict[str, str]):
-    """Keep only quote-verified findings and rank assumptions by risk (ties keep draft order)."""
+    """Keep only quote-verified findings and rank by risk; ties go to higher impact, then draft order."""
     kept = [a for a in analysis.assumptions if grounded(a.source, a.quote, drafts)]
     kept.sort(key=lambda a: (-risk(a), -a.impact))
     conflicts = [c for c in analysis.conflicts
@@ -213,8 +213,10 @@ def triage(analysis: Analysis, drafts: dict[str, str]):
 
 
 def _md(text: str) -> str:
-    """Flatten to one line and escape characters that could inject links, HTML or break tables."""
-    return re.sub(r"([\\`\[\]<>|])", r"\\\1", " ".join(text.split()))
+    """Flatten to one line and escape characters that could inject links, HTML or break tables.
+    Escaping the colon in "https:" and the dot in "www." stops GitHub turning bare URLs into links."""
+    text = re.sub(r"([\\`\[\]<>|])", r"\\\1", " ".join(text.split()))
+    return re.sub(r"(?i)\b(https?|ftp|www)([:.])", r"\1\\\2", text)
 
 
 def render(analysis: Analysis, kept: list[Assumption], conflicts: list[Conflict], rejected: list[str],
