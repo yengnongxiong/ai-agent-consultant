@@ -6,7 +6,7 @@ import pytest
 import secondcut as sc
 
 DRAFTS = {
-    "growth.md": "We will add 20 sales reps in Q1.\nCustomers say they’d pay more for bundles.",
+    "growth.md": "We will **add 20 sales reps** in Q1.\nCustomers say they’d pay more for bundles.",
     "people.md": "A hiring freeze holds through next year.",
 }
 

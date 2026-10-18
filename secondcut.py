@@ -126,11 +126,12 @@ def analyze(drafts: dict[str, str], client: anthropic.Anthropic) -> Analysis:
     return message.parsed_output
 
 
-_QUOTES = str.maketrans("‘’“”–—", "''\"\"--")
+# Straighten curly quotes and dashes; drop Markdown emphasis so **bold** text still matches.
+_NORMALIZE = str.maketrans("‘’“”–—", "''\"\"--", "*_`")
 
 
 def _norm(text: str) -> str:
-    return " ".join(text.translate(_QUOTES).lower().split())
+    return " ".join(text.translate(_NORMALIZE).lower().split())
 
 
 def grounded(source: str, quote: str, drafts: dict[str, str]) -> bool:
