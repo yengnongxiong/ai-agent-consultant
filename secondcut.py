@@ -326,7 +326,7 @@ def render_html(analysis: Analysis, kept: list[Assumption], conflicts: list[Conf
         map=_risk_map(kept),
         rows=rows,
         tests=tests,
-        conflicts=f"<h2>Where the drafts disagree</h2>{conflict_html}" if conflicts else "",
+        conflicts=f'<h2 id="conflicts">Where the drafts disagree</h2>{conflict_html}' if conflicts else "",
         discarded=(f'<h2>Discarded: quote not found in the drafts</h2><ul class="discarded">{discarded}</ul>'
                    if rejected else ""),
         model=e(model),
