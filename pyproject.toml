@@ -1,0 +1,18 @@
+[project]
+name = "secondcut"
+version = "0.1.0"
+description = "Stress-test a strategy draft: find its riskiest assumptions and design a cheap test for each."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=1.15.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
