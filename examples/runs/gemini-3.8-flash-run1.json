@@ -1,0 +1,140 @@
+{
+  "thesis": "Corvane plans to increase gross margins from 22% to 26% by launching a paid digital membership program, AI reordering, and an inside-sales push to shift contractor ordering online.",
+  "assumptions": [
+    {
+      "claim": "At least 30% of top accounts will pay $49 per month for a membership providing free next-day delivery and bulk pricing.",
+      "source": "growth-draft.md",
+      "quote": "We expect at least 30% of our top 500 accounts to subscribe within six months",
+      "lens": "desirability",
+      "impact": 5,
+      "evidence": 2,
+      "test": {
+        "method": "Have branch managers present a paid pre-order agreement for Corvane Pro to 50 top accounts with first-month billing starting at launch.",
+        "metric": "Paid pre-order sign-up rate among contacted accounts",
+        "go_if": ">= 25% of contacted accounts sign binding pre-commitments",
+        "kill_if": "< 10% of contacted accounts sign binding pre-commitments",
+        "days": 14
+      }
+    },
+    {
+      "claim": "Contractor accounts prefer ordering via digital self-service over calling or visiting physical branch counters.",
+      "source": "growth-draft.md",
+      "quote": "Corvane's contractors are ready to move ordering online",
+      "lens": "desirability",
+      "impact": 5,
+      "evidence": 2,
+      "test": {
+        "method": "Send an email and SMS portal link to 200 active contractors offering standard ordering with 1-click checkout and same branch pickup/delivery terms.",
+        "metric": "Percentage of repeat orders placed via web portal over 14 days",
+        "go_if": ">= 20% of orders placed online",
+        "kill_if": "< 5% of orders placed online",
+        "days": 14
+      }
+    },
+    {
+      "claim": "Corvane's historical ERP order records are sufficiently clean to build automated next-week predictive reorder carts.",
+      "source": "growth-draft.md",
+      "quote": "Our ERP order history is clean enough to train demand forecasts that predict what each contractor will need next week.",
+      "lens": "feasibility",
+      "impact": 3,
+      "evidence": 1,
+      "test": {
+        "method": "Run an automated data-profiling audit across a random sample of 5,000 historical orders from the past 24 months to identify invalid, duplicate, or mislabeled SKUs.",
+        "metric": "Percentage of sampled order records with unresolved SKU or data errors",
+        "go_if": "<= 5% error rate",
+        "kill_if": "> 15% error rate",
+        "days": 7
+      }
+    },
+    {
+      "claim": "The existing four-person IT team can build an AI demand forecasting reorder model while executing their current commitments.",
+      "source": "growth-draft.md",
+      "quote": "Start the reorder-model build with the existing IT team.",
+      "lens": "readiness",
+      "impact": 4,
+      "evidence": 1,
+      "test": {
+        "method": "Conduct a capacity sprint planning review with the IT team lead to map hours required for the AI model against ERP upgrade deliverables.",
+        "metric": "Dedicated IT engineer hours available per week for reorder model build through Q3",
+        "go_if": ">= 25 hours per week unallocated to ERP migration",
+        "kill_if": "< 10 hours per week unallocated to ERP migration",
+        "days": 5
+      }
+    },
+    {
+      "claim": "Sales reps will actively pitch Corvane Pro and drive digital adoption under current incentive structures.",
+      "source": "growth-draft.md",
+      "quote": "Reps are the fastest path to adoption because contractors trust their branch contacts.",
+      "lens": "readiness",
+      "impact": 4,
+      "evidence": 1,
+      "test": {
+        "method": "Ask 15 inside and counter sales reps across 3 branches to pitch the digital portal to 5 clients each without changing their commission policy.",
+        "metric": "Percentage of asked reps who complete all 5 client outreach pitches within one week",
+        "go_if": ">= 80% of reps complete outreach",
+        "kill_if": "< 40% of reps complete outreach",
+        "days": 7
+      }
+    },
+    {
+      "claim": "Moving orders online and capturing membership fees will lower cost-to-serve enough to increase company gross margins by 400 basis points.",
+      "source": "growth-draft.md",
+      "quote": "gross margin rises from 22% to 26% within 18 months, driven by lower cost-to-serve and Pro membership fees.",
+      "lens": "viability",
+      "impact": 4,
+      "evidence": 1,
+      "test": {
+        "method": "Analyze transaction cost logs from the two-branch online trial to compare true fulfillment, delivery, and discounting costs of web orders versus phone/counter orders.",
+        "metric": "Net margin improvement per online order relative to offline baseline",
+        "go_if": ">= 300 basis points margin improvement per order",
+        "kill_if": "< 100 basis points margin improvement per order",
+        "days": 10
+      }
+    },
+    {
+      "claim": "Contractors in new metro markets will purchase memberships and supplies without Corvane having local physical branches.",
+      "source": "growth-draft.md",
+      "quote": "Expand to two new metro areas in the second half of the year, using Pro as the entry offer rather than opening full branches.",
+      "lens": "desirability",
+      "impact": 4,
+      "evidence": 1,
+      "test": {
+        "method": "Run targeted local search ads in the two target metros offering Corvane Pro delivery terms, directing contractors to a landing page with a sign-up call to action.",
+        "metric": "Qualified contractor landing page conversion rate to membership waitlist",
+        "go_if": ">= 8% conversion rate",
+        "kill_if": "< 2% conversion rate",
+        "days": 14
+      }
+    }
+  ],
+  "conflicts": [
+    {
+      "tension": "The growth strategy requires hiring 20 new inside-sales reps in Q1, but corporate policy mandates a strict hiring freeze where headcount must remain flat or shrink.",
+      "source_a": "growth-draft.md",
+      "quote_a": "Hire 20 inside-sales reps in Q1 to call every top-500 account and sign them up for Pro.",
+      "source_b": "workforce-draft.md",
+      "quote_b": "A hiring freeze holds through the end of next fiscal year."
+    },
+    {
+      "tension": "The growth draft asserts ERP order history is clean enough for predictive modeling, while workforce audit findings show approximately 20% of historical records have duplicate or mislabeled codes.",
+      "source_a": "growth-draft.md",
+      "quote_a": "Our ERP order history is clean enough to train demand forecasts that predict what each contractor will need next week.",
+      "source_b": "workforce-draft.md",
+      "quote_b": "the team has flagged duplicate and mislabeled product codes in roughly a fifth of historical orders."
+    },
+    {
+      "tension": "The growth plan relies on sales reps to drive customer adoption of digital ordering, but sales reps are financially penalized because they earn zero commission on online orders.",
+      "source_a": "growth-draft.md",
+      "quote_a": "Reps are the fastest path to adoption because contractors trust their branch contacts.",
+      "source_b": "workforce-draft.md",
+      "quote_b": "Orders that customers place online earn reps nothing."
+    },
+    {
+      "tension": "The growth thesis states contractors are ready to transition ordering online, whereas internal customer survey data shows over 80% prefer ordering via phone or branch counter.",
+      "source_a": "growth-draft.md",
+      "quote_a": "Corvane's contractors are ready to move ordering online, and the company that captures that shift first will own the regional market.",
+      "source_b": "workforce-draft.md",
+      "quote_b": "In last year's customer survey, 41 of 50 contractors said they prefer to order by phone or at the counter, mostly because they rely on branch staff to catch mistakes in their orders."
+    }
+  ]
+}

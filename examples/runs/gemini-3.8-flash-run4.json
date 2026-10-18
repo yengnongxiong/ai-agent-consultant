@@ -1,0 +1,133 @@
+{
+  "thesis": "Corvane proposes accelerating margin and revenue growth by launching a paid digital membership program, AI reordering tools, and geographic expansion powered by inside-sales reps and existing IT resources.",
+  "assumptions": [
+    {
+      "claim": "At least 30% of top 500 contractor accounts will pay $49 per month for Corvane Pro.",
+      "source": "growth-draft.md",
+      "quote": "We expect at least 30% of our top 500 accounts to subscribe within six months",
+      "lens": "desirability",
+      "impact": 5,
+      "evidence": 2,
+      "test": {
+        "method": "Concierge pre-sale campaign where reps pitch 50 randomly selected top accounts on an advance annual or monthly Corvane Pro subscription.",
+        "metric": "Percentage of contacted accounts signing a binding paid subscription agreement.",
+        "go_if": ">= 25% signed agreements",
+        "kill_if": "< 10% signed agreements",
+        "days": 14
+      }
+    },
+    {
+      "claim": "Corvane's historical ERP order records are sufficiently accurate and structured to train predictive AI reorder algorithms without extensive remediation.",
+      "source": "growth-draft.md",
+      "quote": "Our ERP order history is clean enough to train demand forecasts that predict what each contractor will need next week.",
+      "lens": "feasibility",
+      "impact": 4,
+      "evidence": 1,
+      "test": {
+        "method": "Data quality audit of a random sample of 500 historical order records across top product categories.",
+        "metric": "Percentage of sampled order records with valid, unique product codes and complete order metadata.",
+        "go_if": ">= 95% clean records",
+        "kill_if": "< 85% clean records",
+        "days": 7
+      }
+    },
+    {
+      "claim": "Branch and inside-sales reps will actively promote digital membership adoption to their accounts despite current commission arrangements.",
+      "source": "growth-draft.md",
+      "quote": "Reps are the fastest path to adoption because contractors trust their branch contacts.",
+      "lens": "readiness",
+      "impact": 4,
+      "evidence": 1,
+      "test": {
+        "method": "Pilot outreach task asking 10 inside and counter reps to introduce digital ordering to 10 accounts each with no change to standard commission rules.",
+        "metric": "Percentage of assigned reps who complete all 10 customer introductions within the test window.",
+        "go_if": ">= 80% rep completion rate",
+        "kill_if": "< 40% rep completion rate",
+        "days": 10
+      }
+    },
+    {
+      "claim": "The existing four-person IT team possesses sufficient unallocated bandwidth to build the AI reordering system immediately.",
+      "source": "growth-draft.md",
+      "quote": "Start the reorder-model build with the existing IT team.",
+      "lens": "readiness",
+      "impact": 4,
+      "evidence": 1,
+      "test": {
+        "method": "Resource capacity review with IT leadership mapping hours committed to ERP upgrade against AI build requirements.",
+        "metric": "Dedicated developer hours available per week for non-ERP projects through Q3.",
+        "go_if": ">= 30 hours per week",
+        "kill_if": "< 10 hours per week",
+        "days": 5
+      }
+    },
+    {
+      "claim": "Target contractors are willing to transition ordering workflows online rather than ordering via phone or branch counters.",
+      "source": "growth-draft.md",
+      "quote": "Corvane's contractors are ready to move ordering online",
+      "lens": "desirability",
+      "impact": 5,
+      "evidence": 2,
+      "test": {
+        "method": "Fake-door or quick-portal test offering 100 active phone/counter contractors a 5% instant discount on their next order if completed online.",
+        "metric": "Percentage of contacted contractors who submit their next order through the portal.",
+        "go_if": ">= 20% online adoption",
+        "kill_if": "< 5% online adoption",
+        "days": 14
+      }
+    },
+    {
+      "claim": "National competitors will not develop or launch competing regional same-day delivery services within the next 12 months.",
+      "source": "growth-draft.md",
+      "quote": "national players have not yet built local same-day delivery, and they will not respond within the next 12 months.",
+      "lens": "viability",
+      "impact": 3,
+      "evidence": 1,
+      "test": {
+        "method": "Competitive mystery shopping and regional job-posting analysis of top 3 national competitors across Corvane's 38 branch markets.",
+        "metric": "Number of competitor facilities or job postings in Corvane markets offering same-day jobsite delivery.",
+        "go_if": "0 regional facilities or active postings found",
+        "kill_if": ">= 2 regional facilities or active postings found",
+        "days": 10
+      }
+    },
+    {
+      "claim": "Corvane can successfully acquire contractor accounts in new metro areas purely via digital membership without physical branch counters.",
+      "source": "growth-draft.md",
+      "quote": "Expand to two new metro areas in the second half of the year, using Pro as the entry offer rather than opening full branches.",
+      "lens": "desirability",
+      "impact": 4,
+      "evidence": 1,
+      "test": {
+        "method": "Direct sales outreach and digital landing page campaign targeting 100 licensed general contractors in one target expansion metro offering Corvane Pro delivery.",
+        "metric": "Percentage of qualified leads expressing intent to buy without a local branch.",
+        "go_if": ">= 15% qualified intent rate",
+        "kill_if": "< 3% qualified intent rate",
+        "days": 14
+      }
+    }
+  ],
+  "conflicts": [
+    {
+      "tension": "Growth strategy calls for hiring 20 new inside-sales reps while workforce guidelines dictate a firm hiring freeze and attrition.",
+      "source_a": "growth-draft.md",
+      "quote_a": "Hire 20 inside-sales reps in Q1 to call every top-500 account and sign them up for Pro.",
+      "source_b": "workforce-draft.md",
+      "quote_b": "A hiring freeze holds through the end of next fiscal year."
+    },
+    {
+      "tension": "Growth strategy assumes IT can begin building the AI reorder engine immediately, whereas workforce draft shows IT is fully committed to the ERP upgrade until Q3.",
+      "source_a": "growth-draft.md",
+      "quote_a": "Start the reorder-model build with the existing IT team.",
+      "source_b": "workforce-draft.md",
+      "quote_b": "IT is fully committed to the ERP upgrade until Q3."
+    },
+    {
+      "tension": "Growth strategy claims ERP order data is clean enough to train predictive models, while workforce draft states one-fifth of records have duplicate or mislabeled codes.",
+      "source_a": "growth-draft.md",
+      "quote_a": "Our ERP order history is clean enough to train demand forecasts that predict what each contractor will need next week.",
+      "source_b": "workforce-draft.md",
+      "quote_b": "the team has flagged duplicate and mislabeled product codes in roughly a fifth of historical orders."
+    }
+  ]
+}
