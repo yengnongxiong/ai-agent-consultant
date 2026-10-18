@@ -148,3 +148,15 @@ def test_load_reads_pdf_text_and_rejects_broken_or_oversized_pdfs(tmp_path, monk
     monkeypatch.setattr(sc, "MAX_PDF_BYTES", 10)
     with pytest.raises(SystemExit, match="larger than"):
         sc.load([good])
+
+
+def test_html_brief_is_self_contained_escaped_and_plots_every_assumption():
+    risky = assumption("add 20 sales reps", claim="<script>alert(1)</script>", impact=5, evidence=1)
+    safe = assumption("pay more for bundles", claim="bundles", impact=2, evidence=4)
+    analysis = sc.Analysis(thesis='Grow "fast" & <b>loud</b>', assumptions=[risky, safe], conflicts=[])
+    page = sc.render_html(analysis, *sc.triage(analysis, DRAFTS), "test-model")
+
+    assert "<script" not in page and "&lt;script&gt;" in page and "&lt;b&gt;loud&lt;/b&gt;" in page
+    assert "default-src 'none'" in page  # the browser itself refuses scripts and remote files
+    assert page.count('class="dot"') == 2 and 'href="#a1"' in page and 'id="a2"' in page
+    assert "1 of 2 load-bearing assumptions are high-risk" in page and "$" not in page.split("<main>")[1]

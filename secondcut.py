@@ -9,10 +9,12 @@ Usage: uv run secondcut.py DRAFT [DRAFT ...] > brief.md
 """
 
 import argparse
+import html
 import re
 import sys
 import unicodedata
 from pathlib import Path
+from string import Template
 from typing import Literal
 
 import anthropic
@@ -258,23 +260,85 @@ def render(analysis: Analysis, kept: list[Assumption], conflicts: list[Conflict]
     return "\n".join(out)
 
 
-def main(argv: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(
-        prog="secondcut",
-        description="Stress-test strategy drafts: find the riskiest assumptions and design a cheap test for each.",
+def _risk_map(kept: list[Assumption]) -> str:
+    """Impact-vs-evidence 2x2 as inline SVG. The shaded zone is exactly where the high-risk rule fires."""
+    cw, ch, left, top = 96, 64, 64, 12  # cell size and plot margins, in SVG units
+    width, height = left + 5 * cw + 8, top + 5 * ch + 56
+    zone = "".join(f'<rect x="{left + (ev - 1) * cw}" y="{top + (5 - im) * ch}" width="{cw}" height="{ch}"/>'
+                   for ev in range(1, 6) for im in range(1, 6) if im * (6 - ev) >= HIGH_RISK)
+    grid = "".join(f'<line x1="{left + k * cw}" y1="{top}" x2="{left + k * cw}" y2="{top + 5 * ch}"/>'
+                   f'<line x1="{left}" y1="{top + k * ch}" x2="{left + 5 * cw}" y2="{top + k * ch}"/>'
+                   for k in range(6))
+    ticks = "".join(f'<text class="tx" x="{left + (k - 0.5) * cw:g}" y="{top + 5 * ch + 18}">{k}</text>'
+                    f'<text class="ty" x="{left - 12}" y="{top + (5.5 - k) * ch:g}">{k}</text>' for k in range(1, 6))
+    cells: dict[tuple[int, int], list[int]] = {}
+    for i, a in enumerate(kept, 1):
+        cells.setdefault((a.evidence, a.impact), []).append(i)
+    dots = []
+    # shortcut: more than 6 assumptions in one cell overlap; add a third row if real drafts ever do that.
+    for (ev, im), ranks in cells.items():
+        rows = (len(ranks) + 2) // 3
+        for k, i in enumerate(ranks):
+            row, col = divmod(k, 3)
+            in_row = min(3, len(ranks) - row * 3)
+            cx = left + (ev - 0.5) * cw + (col - (in_row - 1) / 2) * 26
+            cy = top + (5.5 - im) * ch + (row - (rows - 1) / 2) * 26
+            a = kept[i - 1]
+            dots.append(f'<a class="dot" href="#a{i}"><title>{i}. {html.escape(a.claim)} '
+                        f'Impact {a.impact}, evidence {a.evidence}, risk {risk(a)}.</title>'
+                        f'<circle cx="{cx:g}" cy="{cy:g}" r="11"/><text x="{cx:g}" y="{cy:g}">{i}</text></a>')
+    return (f'<svg viewBox="0 0 {width} {height}" role="img" '
+            f'aria-label="Risk map of {len(kept)} assumptions by impact and evidence">'
+            f'<g class="zone">{zone}<text x="{left + 8}" y="{top + 16}">Test first</text></g>'
+            f'<g class="grid">{grid}</g>{ticks}'
+            f'<text class="axis" x="{left + 2.5 * cw:g}" y="{height - 8}">'
+            f'Evidence in the drafts (1 = none, 5 = backed by data)</text>'
+            f'<text class="axis" transform="translate(16 {top + 2.5 * ch:g}) rotate(-90)">'
+            f'Impact if wrong (5 = the plan collapses)</text>'
+            f'{"".join(dots)}</svg>')
+
+
+def render_html(analysis: Analysis, kept: list[Assumption], conflicts: list[Conflict], rejected: list[str],
+                model: str) -> str:
+    """The same brief as a self-contained web page: no scripts, no remote files, all model text escaped."""
+    e = html.escape
+    high = sum(risk(a) >= HIGH_RISK for a in kept)
+    rows = "\n".join(f'<tr><td><a href="#a{i}">{i}</a></td><td class="num risk">{risk(a)}</td><td>{e(a.claim)}</td>'
+                     f'<td>{a.lens}</td><td class="num">{a.impact}</td><td class="num">{a.evidence}</td></tr>'
+                     for i, a in enumerate(kept, 1))
+    tests = "\n".join(
+        f'<article id="a{i}"><h3><span class="rank">{i}</span>{e(a.claim)}</h3>'
+        f'<blockquote>\u201c{e(a.quote)}\u201d<cite>{e(a.source)}</cite></blockquote><dl>'
+        f'<div><dt>Test, {a.test.days} days</dt><dd>{e(a.test.method)}</dd></div>'
+        f'<div><dt>Measure</dt><dd>{e(a.test.metric)}</dd></div>'
+        f'<div class="go"><dt>\u2713 Go if</dt><dd>{e(a.test.go_if)}</dd></div>'
+        f'<div class="kill"><dt>\u2715 Kill if</dt><dd>{e(a.test.kill_if)}</dd></div></dl></article>'
+        for i, a in enumerate(kept, 1))
+    conflict_html = "".join(
+        f'<div class="conflict"><p>{e(c.tension)}</p><div class="sides">'
+        f'<blockquote>\u201c{e(c.quote_a)}\u201d<cite>{e(c.source_a)}</cite></blockquote><span class="vs">vs.</span>'
+        f'<blockquote>\u201c{e(c.quote_b)}\u201d<cite>{e(c.source_b)}</cite></blockquote></div></div>'
+        for c in conflicts)
+    discarded = "".join(f"<li>{e(r)}</li>" for r in rejected)
+    return Template(Path(__file__).with_name("template.html").read_text(encoding="utf-8")).substitute(
+        headline=f"{high} of {len(kept)} load-bearing assumptions are high-risk. Test them before committing budget.",
+        thesis=e(analysis.thesis),
+        map=_risk_map(kept),
+        rows=rows,
+        tests=tests,
+        conflicts=f"<h2>Where the drafts disagree</h2>{conflict_html}" if conflicts else "",
+        discarded=(f'<h2>Discarded: quote not found in the drafts</h2><ul class="discarded">{discarded}</ul>'
+                   if rejected else ""),
+        model=e(model),
     )
-    parser.add_argument("drafts", nargs="+", type=Path, help="strategy drafts as Markdown, plain-text or PDF files")
-    parser.add_argument("--provider", choices=["claude", "gemini"], default="claude",
-                        help="AI provider that receives the drafts (default: claude)")
-    args = parser.parse_args(argv)
-    drafts = load(args.drafts)
-    model = GEMINI_MODEL if args.provider == "gemini" else CLAUDE_MODEL
-    print(f"Analyzing {len(drafts)} draft(s) with {model}...", file=sys.stderr)
+
+
+def run(provider: str, drafts: dict[str, str]) -> Analysis:
+    """Send the drafts to the chosen provider, turning API failures into one-line errors."""
     try:
-        if args.provider == "gemini":
-            analysis = run_gemini(drafts)
-        else:
-            analysis = analyze_claude(drafts, anthropic.Anthropic())
+        if provider == "gemini":
+            return run_gemini(drafts)
+        return analyze_claude(drafts, anthropic.Anthropic())
     except TypeError as e:  # the SDK raises this, not an API error, when no credentials are set
         if "authentication" not in str(e):
             raise
@@ -287,7 +351,23 @@ def main(argv: list[str] | None = None) -> None:
         sys.exit("error: could not reach the API; check your connection")
     except (RuntimeError, pydantic.ValidationError) as e:
         sys.exit(f"error: {e}")
-    print(render(analysis, *triage(analysis, drafts), model))
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(
+        prog="secondcut",
+        description="Stress-test strategy drafts: find the riskiest assumptions and design a cheap test for each.",
+    )
+    parser.add_argument("drafts", nargs="+", type=Path, help="strategy drafts as Markdown, plain-text or PDF files")
+    parser.add_argument("--provider", choices=["claude", "gemini"], default="claude",
+                        help="AI provider that receives the drafts (default: claude)")
+    parser.add_argument("--html", action="store_true", help="write a self-contained web page instead of Markdown")
+    args = parser.parse_args(argv)
+    drafts = load(args.drafts)
+    model = GEMINI_MODEL if args.provider == "gemini" else CLAUDE_MODEL
+    print(f"Analyzing {len(drafts)} draft(s) with {model}...", file=sys.stderr)
+    analysis = run(args.provider, drafts)
+    print((render_html if args.html else render)(analysis, *triage(analysis, drafts), model))
 
 
 if __name__ == "__main__":
