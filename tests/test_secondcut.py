@@ -58,25 +58,25 @@ def test_triage_ranks_by_risk_and_discards_untraceable_findings():
 
 def test_render_escapes_model_text_so_it_cannot_inject_links_or_html():
     a = assumption("add 20 sales reps", claim="[click](https://example.com) <img> a|b")
-    md = sc.render(sc.Analysis(thesis="t", assumptions=[a], conflicts=[]), [a], [], [])
+    md = sc.render(sc.Analysis(thesis="t", assumptions=[a], conflicts=[]), [a], [], [], "test-model")
     assert r"\[click\]" in md and r"\<img\>" in md and r"a\|b" in md
     assert "0 of 1 load-bearing assumptions are high-risk" in md  # risk 9 is below the bar
 
 
-def test_analyze_sends_tagged_drafts_and_returns_parsed_output():
+def test_claude_sends_tagged_drafts_and_returns_parsed_output():
     parsed = sc.Analysis(thesis="t", assumptions=[], conflicts=[])
     usage = SimpleNamespace(input_tokens=1, output_tokens=1)
     client = FakeClient(SimpleNamespace(stop_reason="end_turn", parsed_output=parsed, usage=usage))
-    assert sc.analyze(DRAFTS, client) is parsed
+    assert sc.analyze_claude(DRAFTS, client) is parsed
     content = client.kwargs["messages"][0]["content"]
     assert '<draft name="people.md">' in content and client.kwargs["output_format"] is sc.Analysis
 
 
 @pytest.mark.parametrize("stop_reason", ["refusal", "max_tokens"])
-def test_analyze_fails_loudly_when_the_model_stops_early(stop_reason):
+def test_claude_fails_loudly_when_the_model_stops_early(stop_reason):
     client = FakeClient(SimpleNamespace(stop_reason=stop_reason, parsed_output=None))
     with pytest.raises(RuntimeError, match=stop_reason):
-        sc.analyze(DRAFTS, client)
+        sc.analyze_claude(DRAFTS, client)
 
 
 def test_load_rejects_empty_duplicate_and_oversized_input(tmp_path):
@@ -92,3 +92,20 @@ def test_load_rejects_empty_duplicate_and_oversized_input(tmp_path):
     for paths in ([empty], [big], [small, twin]):
         with pytest.raises(SystemExit):
             sc.load(paths)
+
+
+def test_gemini_returns_parsed_output_and_rejects_invalid_replies():
+    parsed = sc.Analysis(thesis="t", assumptions=[], conflicts=[])
+    usage = SimpleNamespace(prompt_token_count=1, candidates_token_count=1, thoughts_token_count=None)
+    calls = []
+
+    def client(reply):
+        def generate_content(**kwargs):
+            calls.append(kwargs)
+            return SimpleNamespace(parsed=reply, candidates=[SimpleNamespace(finish_reason="STOP")], usage_metadata=usage)
+        return SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+
+    assert sc.analyze_gemini(DRAFTS, client(parsed)) is parsed
+    assert calls[0]["config"]["response_schema"] is sc.Analysis and '<draft name="growth.md">' in calls[0]["contents"]
+    with pytest.raises(RuntimeError, match="STOP"):
+        sc.analyze_gemini(DRAFTS, client(None))
