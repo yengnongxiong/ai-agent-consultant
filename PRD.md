@@ -72,6 +72,8 @@ discovered last, when it is most expensive to be wrong.
 | F7 | Flag contradictions, with both sides quoted and verified. | ✅ |
 | F8 | Produce a one-page Markdown brief. | ✅ |
 | F9 | Run on Claude (default) or Gemini, with the provider chosen explicitly. | ✅ |
+| F10 | Produce the same brief as a self-contained web page with an impact-vs-evidence risk map. | ✅ |
+| F11 | Score repeated runs against a known answer key and keep every raw model reply. | ✅ |
 
 **Non-functional**
 
@@ -87,14 +89,17 @@ discovered last, when it is most expensive to be wrong.
 
 The north-star metric is **behavior change, not output quality**: the tool exists to change what a team does next.
 
-| Metric | Target | Why it matters |
-|---|---|---|
-| **Tests actually run:** briefs where at least one proposed test is run within two weeks | 50% or more | The north star. A brief nobody acts on is just more reading. |
-| **Grounding rate:** findings in the brief backed by a verified quote | 100% | Enforced by code. Trust is the product. |
-| **Discard rate:** model findings thrown out for bad quotes | Under 10% | A rising rate is an early warning that the prompt or model is drifting. |
-| **Recall:** planted assumptions found in a labeled test set | 80% or more | Measures whether the tool misses the bet that matters. Needs the evaluation set on the roadmap. |
-| **Ranking agreement:** overlap between the tool's top 3 and an expert reviewer's top 3 | 2 of 3 or better | Checks that the ranking matches expert judgment. |
-| **Time and cost per brief** | Under 3 minutes and under $1 | Cheap enough to run on every draft, not just the big ones. |
+| Metric | Target | Measured in v0.1 | Why it matters |
+|---|---|---|---|
+| **Tests actually run:** briefs where at least one proposed test is run within two weeks | 50% or more | Not yet: needs pilot users | The north star. A brief nobody acts on is just more reading. |
+| **Grounding rate:** findings in the brief backed by a verified quote | 100% | 100%, enforced by code | Trust is the product. |
+| **Discard rate:** model findings thrown out for bad quotes | Under 10% | 0% across 5 runs | A rising rate is an early warning that the prompt or model is drifting. |
+| **Recall:** planted bets found on the example drafts | 80% or more | **72%** (36 of 50) ❌ | Measures whether the tool misses the bet that matters. Below target: the top priority for v0.2. |
+| **Contradictions caught** on the example drafts | 80% or more | 84% (21 of 25) | Conflicts between drafts are the hardest thing for a busy reader to spot. |
+| **Ranking agreement:** overlap between the tool's top 3 and an expert reviewer's top 3 | 2 of 3 or better | Not yet: needs a reviewer | Checks that the ranking matches expert judgment. |
+| **Time and cost per brief** | Under 3 minutes and under $1 | About a minute; roughly 1,400 input and 2,000 to 3,600 output tokens on Gemini Flash | Cheap enough to run on every draft, not just the big ones. |
+
+Measured values come from five `gemini-3.8-flash` runs on the example drafts; see [`evals/results.md`](evals/results.md).
 
 ## 7. Risks and mitigations
 
