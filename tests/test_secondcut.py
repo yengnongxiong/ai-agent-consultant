@@ -65,7 +65,8 @@ def test_render_escapes_model_text_so_it_cannot_inject_links_or_html():
 
 def test_analyze_sends_tagged_drafts_and_returns_parsed_output():
     parsed = sc.Analysis(thesis="t", assumptions=[], conflicts=[])
-    client = FakeClient(SimpleNamespace(stop_reason="end_turn", parsed_output=parsed))
+    usage = SimpleNamespace(input_tokens=1, output_tokens=1)
+    client = FakeClient(SimpleNamespace(stop_reason="end_turn", parsed_output=parsed, usage=usage))
     assert sc.analyze(DRAFTS, client) is parsed
     content = client.kwargs["messages"][0]["content"]
     assert '<draft name="people.md">' in content and client.kwargs["output_format"] is sc.Analysis

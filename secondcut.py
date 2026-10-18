@@ -123,6 +123,8 @@ def analyze(drafts: dict[str, str], client: anthropic.Anthropic) -> Analysis:
         message = stream.get_final_message()
     if message.stop_reason != "end_turn" or message.parsed_output is None:
         raise RuntimeError(f"the model stopped early ({message.stop_reason}); no brief was produced")
+    usage = message.usage
+    print(f"Done: {usage.input_tokens:,} input + {usage.output_tokens:,} output tokens.", file=sys.stderr)
     return message.parsed_output
 
 
