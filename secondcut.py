@@ -11,16 +11,19 @@ Usage: uv run secondcut.py DRAFT [DRAFT ...] > brief.md
 import argparse
 import re
 import sys
+import unicodedata
 from pathlib import Path
 from typing import Literal
 
 import anthropic
 import pydantic
+import pypdf
 from pydantic import BaseModel, Field
 
 CLAUDE_MODEL = "claude-opus-5-5"
 GEMINI_MODEL = "gemini-3.8-flash"
 MAX_INPUT_CHARS = 200_000  # about 50k tokens; caps the cost of a single run
+MAX_PDF_BYTES = 20_000_000  # PDFs are parsed locally, so cap the file before parsing it
 HIGH_RISK = 15  # of 25: e.g. impact 5 with middling evidence, or impact 3 with none
 
 SYSTEM = """You are a skeptical strategy partner. You receive one or more strategy drafts, \
@@ -90,6 +93,18 @@ class Analysis(BaseModel):
     conflicts: list[Conflict]
 
 
+def _read(path: Path) -> str:
+    """Return a draft's text. PDFs are converted locally, so the quote check sees exactly what the model sees."""
+    if path.suffix.lower() != ".pdf":
+        return path.read_text(encoding="utf-8")
+    if path.stat().st_size > MAX_PDF_BYTES:
+        sys.exit(f"error: {path} is larger than {MAX_PDF_BYTES // 1_000_000} MB")
+    reader = pypdf.PdfReader(path)
+    if reader.is_encrypted and not reader.decrypt(""):  # an empty password opens view-only PDFs
+        sys.exit(f"error: {path} is password-protected")
+    return "\n".join(page.extract_text() or "" for page in reader.pages)
+
+
 def load(paths: list[Path]) -> dict[str, str]:
     """Read drafts keyed by file name, refusing input that is empty, duplicated or too large."""
     drafts = {}
@@ -97,11 +112,12 @@ def load(paths: list[Path]) -> dict[str, str]:
         if path.name in drafts:
             sys.exit(f"error: two drafts are named {path.name}; rename one")
         try:
-            text = path.read_text(encoding="utf-8").strip()
-        except (OSError, UnicodeDecodeError) as e:
-            sys.exit(f"error: cannot read {path} as UTF-8 text ({e.__class__.__name__})")
+            text = _read(path).strip()
+        except (OSError, UnicodeDecodeError, pypdf.errors.PyPdfError) as e:
+            sys.exit(f"error: cannot read {path} ({e.__class__.__name__})")
         if not text:
-            sys.exit(f"error: {path} is empty")
+            hint = " (a scanned PDF needs OCR first)" if path.suffix.lower() == ".pdf" else ""
+            sys.exit(f"error: {path} has no readable text{hint}")
         drafts[path.name] = text
     if sum(map(len, drafts.values())) > MAX_INPUT_CHARS:
         sys.exit(f"error: drafts total more than {MAX_INPUT_CHARS:,} characters; trim them")
@@ -165,12 +181,13 @@ def run_gemini(drafts: dict[str, str]) -> Analysis:
         sys.exit(f"error: Gemini API returned {e.code} {e.status}: {e.message}")
 
 
-# Straighten curly quotes and dashes; drop Markdown emphasis so **bold** text still matches.
-_NORMALIZE = str.maketrans("‘’“”–—", "''\"\"--", "*_`")
+# Compare characters only: ignore case, spacing, line breaks, hyphens, curly quotes and Markdown
+# emphasis, so quotes still match across PDF line wraps and **bold** text. NFKC unfolds ligatures.
+_NORMALIZE = str.maketrans("\u2018\u2019\u201c\u201d", "''\"\"", "*_`-\u00ad\u2010\u2011\u2013\u2014")
 
 
 def _norm(text: str) -> str:
-    return " ".join(text.translate(_NORMALIZE).lower().split())
+    return "".join(unicodedata.normalize("NFKC", text).translate(_NORMALIZE).lower().split())
 
 
 def grounded(source: str, quote: str, drafts: dict[str, str]) -> bool:
@@ -246,7 +263,7 @@ def main(argv: list[str] | None = None) -> None:
         prog="secondcut",
         description="Stress-test strategy drafts: find the riskiest assumptions and design a cheap test for each.",
     )
-    parser.add_argument("drafts", nargs="+", type=Path, help="strategy drafts as Markdown or plain-text files")
+    parser.add_argument("drafts", nargs="+", type=Path, help="strategy drafts as Markdown, plain-text or PDF files")
     parser.add_argument("--provider", choices=["claude", "gemini"], default="claude",
                         help="AI provider that receives the drafts (default: claude)")
     args = parser.parse_args(argv)
