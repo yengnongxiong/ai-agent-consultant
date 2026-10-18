@@ -63,7 +63,7 @@ discovered last, when it is most expensive to be wrong.
 
 | ID | Requirement | v0.1 |
 |---|---|---|
-| F1 | Accept one or more Markdown or plain-text drafts. | ✅ |
+| F1 | Accept one or more Markdown, plain-text or PDF drafts. PDF text is extracted locally. | ✅ |
 | F2 | Name the 5 to 12 load-bearing assumptions, each stated so it could be proven false. | ✅ |
 | F3 | Back every assumption with a verbatim quote, verified by code. Discard untraceable ones and list them in the brief. | ✅ |
 | F4 | Rate impact and evidence from 1 to 5, and tag each assumption desirability, viability, feasibility or readiness. | ✅ |
@@ -71,16 +71,17 @@ discovered last, when it is most expensive to be wrong.
 | F6 | Give every assumption a test: method, metric, go result, kill result and days. | ✅ |
 | F7 | Flag contradictions, with both sides quoted and verified. | ✅ |
 | F8 | Produce a one-page Markdown brief. | ✅ |
+| F9 | Run on Claude (default) or Gemini, with the provider chosen explicitly. | ✅ |
 
 **Non-functional**
 
 | ID | Requirement | v0.1 |
 |---|---|---|
 | N1 | **Trust:** no finding reaches the brief without a verified quote. | ✅ |
-| N2 | **Privacy:** no storage, telemetry or third parties beyond the model API. | ✅ |
-| N3 | **Safety:** drafts are untrusted input; the model has no tools; output is schema-validated and escaped. | ✅ |
+| N2 | **Privacy:** no storage, telemetry or third parties beyond the one model provider the user chose. | ✅ |
+| N3 | **Safety:** drafts are untrusted input; PDFs are parsed locally with size limits; the model has no tools; output is schema-validated and escaped. | ✅ |
 | N4 | **Cost:** input capped at 200,000 characters; token usage shown on every run. | ✅ |
-| N5 | **Maintainability:** one source file, one runtime dependency, offline tests running in CI. | ✅ |
+| N5 | **Maintainability:** one source file, two small default runtime dependencies, offline tests running in CI. | ✅ |
 
 ## 6. Success metrics
 
@@ -103,7 +104,7 @@ The north-star metric is **behavior change, not output quality**: the tool exist
 | The model misses the assumption that actually matters. | The prompt asks for fewer, weightier bets. An evaluation set (roadmap) will measure recall before prompt changes ship. A human still reviews the brief. |
 | A score looks more precise than it is. | The brief shows the formula and the two ratings behind every score. |
 | A draft contains hidden instructions (prompt injection). | Drafts are framed as data, the model has no tools, the output must match a schema, and the text is escaped before rendering. |
-| Users send confidential material. | Nothing is stored, data goes only to the model API, and the README tells users to check their own policy first. |
+| Users send confidential material. | Nothing is stored, data goes only to the provider the user picked, and the README warns against free-tier keys and tells users to check their own policy first. |
 | Teams anchor on the model's suggested thresholds. | Thresholds are presented as starting points; open question 2 below. |
 
 ## 8. Open questions
