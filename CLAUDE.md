@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Guidance for Claude Code in this repository. Product context: [PRD.md](PRD.md). Design rationale: [README.md](README.md#design-choices-and-their-trade-offs).
+Guidance for Claude Code in this repository. Product context: [PRD.md](PRD.md). Design rationale: [README.md](README.md#design-choices).
 
 ## Commands
 

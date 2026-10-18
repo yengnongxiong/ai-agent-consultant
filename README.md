@@ -26,7 +26,7 @@ It also flags places where drafts contradict each other.
 > The first draft tells you what to do. The second cut tells you what to prove first.
 
 **Contents:** [See it in action](#see-it-in-action) · [How it works](#how-it-works) ·
-[How reliable is it?](#how-reliable-is-it) · [Design choices](#design-choices-and-their-trade-offs) ·
+[How reliable is it?](#how-reliable-is-it) · [Design choices](#design-choices) ·
 [Run it yourself](#run-it-yourself) ·
 [Security, privacy and legal](#security-privacy-and-legal) · [Limitations and roadmap](#limitations-and-roadmap) ·
 [Project layout](#project-layout) · [Product requirements (PRD)](PRD.md)
@@ -107,27 +107,48 @@ Every assumption is tagged with one of four lenses, so a reader can see *what ki
 | **Feasibility** | Can we build or deliver it? |
 | **Readiness** | Can our people, processes and data absorb the change? |
 
-The first three are the classic product-strategy lens. **Readiness** is added because many strategies
-that pass the first three still fail on execution: the organization can't take on the change.
+The first three are the classic product-strategy lens; **readiness** is explained under [Design choices](#design-choices).
 
-## Design choices and their trade-offs
+## Design choices
 
-These are the product and system-design decisions that shape the tool, with what each one costs.
+Every choice below gave something up. The trade-off column says what.
 
-| Decision | What I chose | Why | What it gives up |
-|---|---|---|---|
-| **Who does the math** | The model judges; code computes. The model rates impact and evidence, and Python does the scoring and ranking. | The same ratings always produce the same ranking. The rule is one visible line anyone can debate. | Ratings of 1 to 5 are coarse, and a model's ratings can vary between runs. |
-| **Receipts required** | Every finding must quote its source word for word, and code checks it. | An invented assumption can't slip into the brief, and a reviewer can audit any claim in seconds. | A real assumption the model paraphrases gets discarded. The brief lists every discard, so nothing disappears silently. |
-| **One call, not a swarm of agents** | One structured request per run. | One cost, one point of failure, one place to audit. It's fast to run and easy to explain. | There's no separate critic pass. Add one only if evaluation shows assumptions being missed. |
-| **Structured output** | The response must match a JSON schema and is validated before use. | There's no fragile text parsing, and it limits what a malicious instruction hidden in a draft could do. | Changing the output means changing the schema in code. |
-| **Tests with kill criteria** | Every test states a go result *and* a kill result. | A test that can't fail can't change a decision. | The thresholds are model-suggested starting points; teams should set their own before running the test. |
-| **PDFs become text locally** | PDF text is extracted on your machine before anything is sent. | The quote check needs exactly the text the model saw. Only text leaves your machine, never the file's images or metadata. | Charts, images and scanned pages are invisible to the analysis. |
-| **Visual brief, no JavaScript** | The web brief is one self-contained HTML file with an inline chart. | It opens from a link or an email attachment, and with scripts blocked by its security policy there is nothing to exploit or track. | Hover shows a basic tooltip only; there's no filtering or sorting. |
-| **Measure before tuning** | A scored answer key for the example drafts, with the first run published rather than the best. | Prompt changes get judged by numbers, not by one good-looking demo. | One invented company with 10 bets and 5 contradictions is a small test set. |
-| **Command line + Markdown** | No server, no database, no accounts. | Nothing to host, maintain or breach, and the output works anywhere text works. | No point-and-click interface; someone needs to run one command. |
-| **Model** | Claude Opus 5.5 at high reasoning effort by default. | Spotting which beliefs are load-bearing is the hard, judgment-heavy part. It's worth paying for quality on a tool used once per decision. | Slower and more expensive per run than smaller models. |
-| **Provider choice** | Claude or Gemini, picked with an explicit `--provider` flag, never guessed from which key is set. | Many companies approve exactly one AI vendor. An explicit choice means you always know which company receives your drafts. | Two integrations to maintain, and results vary by model. The prompt, quote checks and scoring are shared, so only the API call differs. |
-| **Judge only what's written** | No web search; evidence is rated only from the drafts. | It shows how well the *draft* supports its own claims, and keeps runs fast, cheap and repeatable. | It can't tell you whether outside evidence exists, only that the draft didn't show it. |
+### Product decisions
+
+| Decision | Why | Trade-off |
+|---|---|---|
+| **Receipts required.** Every finding quotes its draft word for word, and code checks the quote. | An invented assumption can't reach the brief, and anyone can audit a claim in seconds. | A real assumption the model paraphrases is discarded. The brief lists every discard, so nothing disappears silently. |
+| **Tests must be able to fail.** Every test states a go result *and* a kill result. | A test that can't fail can't change a decision. | Thresholds are model-suggested starting points; teams should set their own before running a test. |
+| **A fourth lens: readiness.** Desirability, viability and feasibility, plus "can the organization absorb this?" | Many strategies that pass the first three still fail on execution. | Four buckets simplify a messy reality. |
+| **Judge only what's written.** No web search; evidence is rated from the drafts alone. | It shows how well a draft supports itself, and keeps runs fast, cheap and repeatable. | It can't say whether outside evidence exists, only that the draft didn't show it. |
+| **Explicit provider choice.** `--provider claude` or `--provider gemini`, never guessed from which key is set. | Companies often approve one AI vendor, and you should always know who receives your drafts. | Two integrations to maintain, and results vary by model. |
+| **Measure before tuning.** A scored answer key, with the first run published rather than the best. | Prompt changes get judged by numbers, not by one good-looking demo. | One invented company is a small test set. |
+
+### Engineering decisions
+
+| Decision | Why | Trade-off |
+|---|---|---|
+| **The model judges; code computes.** The model rates impact and evidence; Python scores, ranks and verifies. | The same ratings always give the same ranking, and the scoring rule is one line anyone can read. | Ratings of 1 to 5 are coarse and shift between runs. |
+| **One structured call, not a chain of agents.** | One cost, one point of failure, one place to audit. | No separate critic pass; add one only if the harness shows it pays off. |
+| **Schema-validated output.** Pydantic models define the reply, enforced by each provider's structured-output mode and validated again locally. | No fragile text parsing, and an instruction hidden in a draft can only produce data in the expected shape. | Changing the output means changing the schema in code. |
+| **Quote matching ignores layout, not content.** Case, spacing, line breaks, hyphens, curly quotes and ligatures are normalized before comparing. | Honest quotes survive PDF line wraps and bold text, while an altered number still fails. | A paraphrase never matches, by design. |
+| **PDFs parsed locally.** Text is extracted with `pypdf` before anything is sent. | The quote check sees exactly what the model saw, and images and file metadata never leave your machine. | Scanned pages and charts are invisible. |
+| **A web brief with zero JavaScript.** The SVG chart is generated in Python, and a Content-Security-Policy forbids scripts and remote files. | It opens anywhere, from a link or an email attachment, with nothing to exploit or track. | No sorting or filtering, only a basic hover tooltip. |
+| **No server, no database.** A command-line tool writes a file. | Nothing to host, maintain or breach. | Someone has to run one command. |
+| **A small, pinned supply chain.** Two runtime dependencies, hash-locked versions, SHA-pinned CI actions with a read-only token. | Fewer ways for a compromised package or workflow to get in. | Upgrades are deliberate, manual steps. |
+
+### Tech stack at a glance
+
+| Layer | Choice |
+|---|---|
+| Language | Python 3.11+, the whole agent in [one module](secondcut.py) |
+| AI models | Claude Opus 5.5 by default (adaptive thinking, high effort, streaming, server-side refusal fallback), or Gemini 3.8 Flash |
+| Output contract | Pydantic models used as the JSON schema |
+| Inputs | Markdown, plain text and PDF (`pypdf`, parsed locally) |
+| Outputs | Markdown brief, or a self-contained HTML page with an inline SVG risk map |
+| Quality | Offline `pytest` suite with fake AI clients (runs in about a second), plus the [reliability harness](evals/reliability.py) |
+| Packaging | `uv` with a hash-locked `uv.lock`; Google's SDK is an optional extra |
+| CI and hosting | GitHub Actions on every push; GitHub Pages serves the [live example](https://yengnongxiong.github.io/ai-agent-consultant/) |
 
 ## Run it yourself
 
@@ -176,7 +197,7 @@ uv run pytest
 
 - **Your drafts go to exactly one place:** the AI provider you choose (Anthropic by default, or Google), over HTTPS. Second Cut has no server, database, logging, telemetry or analytics, and it saves nothing except the brief you redirect to a file. Each provider's terms govern how it handles inputs: see Anthropic's [commercial terms](https://www.anthropic.com/legal/commercial-terms) and Google's [Gemini API pricing page](https://ai.google.dev/gemini-api/docs/pricing). **Google's free tier may use inputs to improve its products, so never send confidential drafts on a free key.** Check your organization's policy first.
 - **Your API key** is read from the environment by the provider's official SDK. It is never written to disk, logged or printed.
-- **Drafts are treated as untrusted input.** They are clearly labeled as data, and the model is told never to follow instructions inside them. The model has no tools: it cannot browse, run code or touch files. Its only output is JSON checked against a schema, and its text is escaped before going into the brief, so a malicious draft can't plant links or HTML. The web brief carries a Content-Security-Policy that blocks all scripts and remote files. Inspected in a headless browser, it loads zero scripts and makes zero network requests. PDFs are parsed locally by `pypdf`, a pure-Python library with no native code. Files over 20 MB are refused, and so are password-protected ones.
+- **Drafts are treated as untrusted input.** They are clearly labeled as data, and the model is told never to follow instructions inside them. The model has no tools: it cannot browse, run code or touch files. Its only output is JSON checked against a schema, and its text is escaped before going into the brief, so a malicious draft can't plant links or HTML (even bare web addresses are defused so GitHub won't turn them into links). The web brief carries a Content-Security-Policy that blocks all scripts and remote files. Inspected in a headless browser, it loads zero scripts and makes zero network requests. PDFs are parsed locally by `pypdf`, a pure-Python library with no native code. Files over 20 MB are refused, and so are password-protected ones.
 - **Cost is bounded.** Input is capped at 200,000 characters per run, and every run prints its token usage.
 - **Small supply chain.** By default there are two runtime dependencies: the official `anthropic` SDK and `pypdf`, which has no dependencies of its own. Google's official SDK installs only if you opt into Gemini. Every version is locked by hash in `uv.lock`. CI runs with read-only permissions, uses actions pinned to exact commits, and fails if the lockfile drifts.
 - **Legal.** MIT licensed. This is an independent project, not affiliated with or endorsed by any company. The example company and its figures are fictional. Output is AI-generated analysis, not professional, financial or legal advice.
@@ -185,7 +206,7 @@ uv run pytest
 
 **Known limitations**
 
-- It knows only what is in the drafts: no market data and no outside research (see *Judge only what's written* above).
+- It knows only what is in the drafts: no market data and no outside research (see *Judge only what's written* under [Design choices](#design-choices)).
 - The ranking rule is fixed, but the ratings that feed it come from a model and shift between runs: across five runs the same #1 risk came up 3 times.
 - Quote matching compares characters only, ignoring case, spacing, line breaks, hyphens, curly quotes and bold text. A paraphrased quote is discarded, even when the idea behind it is real.
 - Scanned PDFs (pictures of text) and slide decks aren't supported, and charts or images inside PDFs are ignored.
@@ -210,6 +231,12 @@ PRD.md         Product requirements: problem, users, goals, success metrics, ris
 
 The agent's instructions to the model are plain English: see `SYSTEM` near the top of
 [`secondcut.py`](secondcut.py). Changing how the agent thinks means editing a paragraph, not code.
+
+## About
+
+Built by [Yengnong Xiong](https://github.com/yengnongxiong) as a product management portfolio project.
+The [PRD](PRD.md), the trade-offs and the measured results are as much the point as the code.
+Questions and feedback are welcome through [GitHub issues](https://github.com/yengnongxiong/ai-agent-consultant/issues).
 
 ## License
 

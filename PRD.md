@@ -97,7 +97,7 @@ The north-star metric is **behavior change, not output quality**: the tool exist
 | **Recall:** planted bets found on the example drafts | 80% or more | **72%** (36 of 50) ❌ | Measures whether the tool misses the bet that matters. Below target: the top priority for v0.2. |
 | **Contradictions caught** on the example drafts | 80% or more | 84% (21 of 25) | Conflicts between drafts are the hardest thing for a busy reader to spot. |
 | **Ranking agreement:** overlap between the tool's top 3 and an expert reviewer's top 3 | 2 of 3 or better | Not yet: needs a reviewer | Checks that the ranking matches expert judgment. |
-| **Time and cost per brief** | Under 3 minutes and under $1 | About a minute; roughly 1,400 input and 2,000 to 3,600 output tokens on Gemini Flash | Cheap enough to run on every draft, not just the big ones. |
+| **Time and cost per brief** | Under 3 minutes and under $1 | Under a minute per run; roughly 1,400 input and 2,000 to 3,600 output tokens on Gemini Flash | Cheap enough to run on every draft, not just the big ones. |
 
 Measured values come from five `gemini-3.8-flash` runs on the example drafts; see [`evals/results.md`](evals/results.md).
 
