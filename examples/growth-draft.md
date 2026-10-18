@@ -8,7 +8,8 @@ supplies. 38 branches, $410M revenue, 22% gross margin, about 9,000 active contr
 ## Point of view
 
 Corvane's contractors are ready to move ordering online, and the company that captures that
-shift first will own the regional market. Corvane has a 12-year head start in order history
+shift first will own the regional market. A six-week web-ordering trial at two branches last
+spring moved 22% of repeat orders online with no promotion. Corvane has a 12-year head start in order history
 that competitors cannot copy. The window is open now: national players have not yet built
 local same-day delivery, and they will not respond within the next 12 months.
 
@@ -17,6 +18,8 @@ local same-day delivery, and they will not respond within the next 12 months.
 1. **Launch Corvane Pro, a $49/month membership.** Members get free next-day delivery and
    bulk pricing on 2,000 core items. We expect at least 30% of our top 500 accounts to
    subscribe within six months, because contractors value predictable delivery over price.
+   In last quarter's survey of 120 top accounts, 64% ranked reliable next-day delivery above
+   unit price, and 38% said they would pay a monthly fee to guarantee it.
 2. **Add AI-powered reorder suggestions.** Our ERP order history is clean enough to train demand
    forecasts that predict what each contractor will need next week. Suggested carts should lift
    order frequency by 15%.
